@@ -3,6 +3,8 @@ This is a reimplementation of seminal paper "Attention is all you need" with sha
 
 Succesfully create Decoder-only transformer that can generate sentences but still can't receive input.
 
+### Further Improvment: add Encoder section to be able to prompt this guy.
+
 Current words that it babbles.
 ![image](https://github.com/user-attachments/assets/5e6f6d06-cf52-462f-bbd0-b5390c0ee2f9)
 
