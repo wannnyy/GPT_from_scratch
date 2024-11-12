@@ -1,5 +1,5 @@
 # GPT_from_scratch
-This is a reimplementation of seminal paper "Attention is all you need" with shakespear dataset.
+This is a reimplementation of seminal paper "Attention is all you need" with shakespeare dataset.
 
 Succesfully create Decoder-only transformer that can generate sentences but still can't receive input.
 
