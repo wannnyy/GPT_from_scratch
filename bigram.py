@@ -10,6 +10,8 @@ from torch.nn import functional as F
 # no way that we can match the numbers of parameters.
 # my computer almost explode.
 
+# With tokens be the characters level.
+
 
 # hyperparameters
 batch_size = 32 # how many independent sequences will we process in parallel?
@@ -209,6 +211,9 @@ m = model.to(device)
 
 # create a PyTorch optimizer
 optimizer = torch.optim.AdamW(model.parameters(), lr=learning_rate)
+
+# print our total parameters
+print(sum(p.numel() for p in model.parameters()), "total parameters")
 
 for iter in range(max_iters):
 
