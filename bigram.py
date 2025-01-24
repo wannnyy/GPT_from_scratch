@@ -5,7 +5,7 @@ from torch.nn import functional as F
 
 
 # This is Decoder-only transformer.
-# Following "Attention is all you need" paper.
+# Inspried from "Attention is all you need" (Encoder-Decoder transformer) paper.
 # give the sense of what the pre-trained stage of GPT should look like.
 # no way that we can match the numbers of parameters.
 # my computer almost explode.
@@ -33,9 +33,17 @@ torch.manual_seed(1337)
 with open('input.txt', 'r', encoding='utf-8') as f:
     text = f.read()
 
+
 # here are all the unique characters that occur in this text
 chars = sorted(list(set(text)))
+
+
+
+# Since our token is character level, we have total of 65 unique characters.
+# print(len(chars)) # 65
 vocab_size = len(chars)
+
+
 # create a mapping from characters to integers
 stoi = { ch:i for i,ch in enumerate(chars) }
 itos = { i:ch for i,ch in enumerate(chars) }
@@ -52,7 +60,12 @@ val_data = data[n:]
 def get_batch(split):
     # generate a small batch of data of inputs x and targets y
     data = train_data if split == 'train' else val_data
+
+    # randomly sample a chunk of data.
+    # from 0 to len(data) - block_size with the size of batch_size in 1D tensor. 
     ix = torch.randint(len(data) - block_size, (batch_size,))
+
+    # y is just the token directly after x.
     x = torch.stack([data[i:i+block_size] for i in ix])
     y = torch.stack([data[i+1:i+block_size+1] for i in ix])
     x, y = x.to(device), y.to(device)
@@ -82,7 +95,12 @@ class Head(nn.Module):
         self.key = nn.Linear(n_embd, head_size, bias=False)
         self.query = nn.Linear(n_embd, head_size, bias=False)
         self.value = nn.Linear(n_embd, head_size, bias=False)
+
+        # create a buffer to store the lower triangular mask for the attention scores.
+        # so we can do self attention.
         self.register_buffer('tril', torch.tril(torch.ones(block_size, block_size)))
+
+        # Buffer is a tensor that is not considered a model parameter.
 
         # self.dropout = nn.Dropout(dropout)
 
@@ -143,8 +161,8 @@ class Block(nn.Module):
 
     def forward(self, x):
         x = x + self.sa(self.ln1(x))     # residue connection
-        x = x + self.ffwd(self.ln2(x))
-        return x
+        x = x + self.ffwd(self.ln2(x))   # it makes training the model easier.
+        return x                         # I like to think about it as the model have direct access to the encoded tokens.
 
 
 
@@ -155,9 +173,13 @@ class BigramLanguageModel(nn.Module):
 
     def __init__(self):
         super().__init__()
-        # each token directly reads off the logits for the next token from a lookup table
+        # each token directly reads off the logits for the next token from a lookup table.
         self.token_embedding_table = nn.Embedding(vocab_size, n_embd)
         self.position_embedding_table = nn.Embedding(block_size,n_embd)
+
+        # For the token embedding table, we embedded the tokens (65) into n_embd dimensions.
+        # For the position embedding table, we embedded the position (block_size) into n_embd dimensions.
+        # Since we train the model with block_size of 8. There's no need to calculate the position embedding further more.
 
         # Language modeling head
         # self.sa_head = MultiHeadAttention(4,n_embd//4)
@@ -166,7 +188,10 @@ class BigramLanguageModel(nn.Module):
 
         self.blocks = nn.Sequential(*[Block(n_embd, n_head=n_head) for _ in range(n_layer)])
         self.ln_f = nn.LayerNorm(n_embd) # final layer norm
+
+        # This is the fully connected layer that will be used to predict the next token.
         self.lm_head = nn.Linear(n_embd,vocab_size)
+        
 
 
     def forward(self, idx, targets=None):
@@ -217,6 +242,7 @@ print(sum(p.numel() for p in model.parameters()), "total parameters")
 
 for iter in range(max_iters):
 
+    break
     # every once in a while evaluate the loss on train and val sets
     if iter % eval_interval == 0:
         losses = estimate_loss()
